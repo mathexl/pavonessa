@@ -93,7 +93,6 @@ if($_POST){
     $stmnt->execute();
 
 
-
     /* CREATE CONFIG.PHP */
     $filename = "core/config.php";
     $myfile = fopen($filename, "w") or die("Shoot!");
