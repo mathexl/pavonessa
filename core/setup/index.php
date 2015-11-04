@@ -12,7 +12,7 @@ if($_POST){
 
   if($_POST['host'] && $_POST['username'] && $_POST['password'] && $_POST['db_name']
   && $_POST['u'] && $_POST['p'] && $_POST['p2'] == $_POST['p']
-  && $_POST['fname'] && $_POST['lname']){ // checks for all vars
+  && $_POST['fname'] && $_POST['lname'] && $_POST['email']){ // checks for all vars
   //checks if user passwords match
 
     try {
@@ -28,6 +28,10 @@ if($_POST){
 
     /* This assumes the connection worked */
     $stmnt = $db->prepare("
+        DROP TABLE users;
+        DROP TABLE articles;
+        DROP TABLE superindex;
+
         CREATE TABLE users (
           `_id` VARCHAR(60),
           `fname` VARCHAR(100),
@@ -66,7 +70,7 @@ if($_POST){
     $lastloggedin = time();
 
     $stmnt = $db->prepare("INSERT INTO users (`_id`,`fname`,`lname`,`email`,`type`,`sessionid1`,`sessionid2`,`lastloggedin`)
-    VALUES (:id, :fname,:lname,'super',:sessionid1,:sessionid2,:lastloggedin)");
+    VALUES (:id, :fname,:lname,:email,'super',:sessionid1,:sessionid2,:lastloggedin)");
 
     $stmnt->execute([
       ':id'     => $id,
@@ -84,8 +88,31 @@ if($_POST){
     setcookie('s', $row['sessionid2'], time() + 60 * 60 * 24, "/");
 
     /* CREATE SUPER INDEX */
+
     $stmnt = $db->prepare("INSERT INTO superindex (`_a`) VALUES ('main')"); // [todo] add url later.
     $stmnt->execute();
+
+
+
+    /* CREATE CONFIG.PHP */
+    $filename = "core/config.php";
+    $myfile = fopen($filename, "w") or die("Shoot!");
+    $txt = "
+    <?php
+    return [
+        'db' => [
+              'uri' => '" . 'mysql:host=' . $_POST['host'] . ';dbname=' . $_POST['db_name'] . "',
+              'user' => '" . $_POST['username']. "',
+              'pw' => '" . $_POST['password'] . "'
+        ]
+    ];?>
+    "; // writing hardcoded config file.
+
+    echo $filename;
+    echo $txt;
+    fwrite($myfile, $txt);
+    fclose($myfile); // close file.
+
 
   } else {
   include_once("config.php?error=true"); //if db vars not there.
