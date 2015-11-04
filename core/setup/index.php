@@ -10,7 +10,10 @@ v0.0.1, November 4th, 2015
 
 if($_POST){
 
-  if($_POST['host'] && $_POST['username'] && $_POST['password'] && $_POST['db_name']){
+  if($_POST['host'] && $_POST['username'] && $_POST['password'] && $_POST['db_name']
+  && $_POST['u'] && $_POST['p'] && $_POST['p2'] == $_POST['p']
+  && $_POST['fname'] && $_POST['lname']){ // checks for all vars
+  //checks if user passwords match
 
     try {
         $db = new PDO('mysql:host=' . $_POST['host'] . ';dbname=' . $_POST['db_name'],
@@ -20,14 +23,18 @@ if($_POST){
         include_once("config.php?failed=true"); //if db vars not there.
     }
 
+    $conn_data = array($_POST['host'],$_POST['username'],$_POST['password'],$_POST['db_name']);
+    // for storing later
+
     /* This assumes the connection worked */
-    /*
+
     $stmnt = $db->prepare("
 
         CREATE TABLE users (
           `_id` VARCHAR(60),
           `fname` VARCHAR(100),
           `lname` VARCHAR(100),
+          `email` VARCHAR(100),
           `type` VARCHAR(100),
           `sessionid1` VARCHAR(100),
           `sessionid2` VARCHAR(100),
@@ -37,7 +44,28 @@ if($_POST){
     ");
 
     $stmnt->execute();
-    */
+    // Created Users Database.
+
+    $id = md5(mt_rand() . time()); // create user id
+    $sessionid1 = md5(mt_rand() . mt_rand()); // create user id
+    $sessionid2 = md5(mt_rand() . mt_rand()); // create user id
+    $lastloggedin = time();
+
+    $stmnt = $db->prepare("INSERT INTO users (`_id`,`fname`,`lname`,`email`,`type`,`sessionid1`,`sessionid2`,`lastloggedin`)
+    VALUES ($id, :fname,:lname,'super',$sessionid1,$sessionid2,$lastloggedin)");
+
+    $stmnt->execute(
+      ':fname'  => $_POST['fname'],
+      ':lname'  => $_POST['lname'],
+      ':email'  => $_POST['email']
+    );
+
+    // Binds Params since Fname and Lname are passed in by the user.
+    setcookie('email', $row['email'], time() + 60 * 60 * 24, "/");
+    setcookie('a', $row['sessionid1'], time() + 60 * 60 * 24, "/");
+    setcookie('s', $row['sessionid2'], time() + 60 * 60 * 24, "/");
+
+
 
   } else {
   include_once("config.php?error=true"); //if db vars not there.
