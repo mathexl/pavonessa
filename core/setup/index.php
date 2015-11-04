@@ -107,11 +107,13 @@ if($_POST){
     ];?>
     "; // writing hardcoded config file.
 
-    echo $filename;
-    echo $txt;
+
     fwrite($myfile, $txt);
     fclose($myfile); // close file.
 
+    define('__ROOT__', dirname(dirname(dirname(__FILE__))));
+
+    require_once(__ROOT__.'/public/init.php');
 
   } else {
   include_once("config.php?error=true"); //if db vars not there.
