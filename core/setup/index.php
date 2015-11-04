@@ -18,8 +18,8 @@ if($_POST){
     try {
         $db = new PDO('mysql:host=' . $_POST['host'] . ';dbname=' . $_POST['db_name'],
         $_POST['username'], $_POST['password']);
-
     } catch (PDOException $e){
+        print "Error!: " . $e->getMessage() . "<br/>";
         include_once("config.php?failed=true"); //if db vars not there.
     }
 
@@ -27,9 +27,7 @@ if($_POST){
     // for storing later
 
     /* This assumes the connection worked */
-
     $stmnt = $db->prepare("
-
         CREATE TABLE users (
           `_id` VARCHAR(60),
           `fname` VARCHAR(100),
@@ -39,6 +37,22 @@ if($_POST){
           `sessionid1` VARCHAR(100),
           `sessionid2` VARCHAR(100),
           `lastloggedin` VARCHAR(100)
+        );
+
+        CREATE TABLE articles (
+          `_a` VARCHAR(60),
+          `title` VARCHAR(60),
+          `authors` VARCHAR(60),
+          `subtitle` VARCHAR(60),
+          `blurb` VARCHAR(60),
+          `text` LONGBLOB,
+          `parent` VARCHAR(60),
+          `category` VARCHAR(60)
+        );
+
+        CREATE TABLE superindex (
+          `_s` VARCHAR(60),
+          `_url` VARCHAR(260)
         );
 
     ");
@@ -52,20 +66,26 @@ if($_POST){
     $lastloggedin = time();
 
     $stmnt = $db->prepare("INSERT INTO users (`_id`,`fname`,`lname`,`email`,`type`,`sessionid1`,`sessionid2`,`lastloggedin`)
-    VALUES ($id, :fname,:lname,'super',$sessionid1,$sessionid2,$lastloggedin)");
+    VALUES (:id, :fname,:lname,'super',:sessionid1,:sessionid2,:lastloggedin)");
 
-    $stmnt->execute(
+    $stmnt->execute([
+      ':id'     => $id,
       ':fname'  => $_POST['fname'],
       ':lname'  => $_POST['lname'],
-      ':email'  => $_POST['email']
-    );
+      ':email'  => $_POST['email'],
+      ':sessionid1' => $sessionid1,
+      ':sessionid2' => $sessionid2,
+      ':lastloggedin' => $lastloggedin
+    ]);
 
     // Binds Params since Fname and Lname are passed in by the user.
     setcookie('email', $row['email'], time() + 60 * 60 * 24, "/");
     setcookie('a', $row['sessionid1'], time() + 60 * 60 * 24, "/");
     setcookie('s', $row['sessionid2'], time() + 60 * 60 * 24, "/");
 
-
+    /* CREATE SUPER INDEX */
+    $stmnt = $db->prepare("INSERT INTO superindex (`_a`) VALUES ('main')"); // [todo] add url later.
+    $stmnt->execute();
 
   } else {
   include_once("config.php?error=true"); //if db vars not there.
